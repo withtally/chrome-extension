@@ -1,18 +1,11 @@
-// If your extension doesn't need a content script, just leave this file empty
-
-// This is an example of a script that will run on every page. This can alter pages
-// Don't forget to change `matches` in manifest.json if you want to only change specific webpages
 /** @jsxRuntime classic */
 /** @jsx jsx */
 import { css, jsx, } from '@emotion/react'
 import React, { useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import Frame, {FrameContextConsumer} from 'react-frame-component';
-// import tippy, {followCursor} from 'tippy.js';
 import { v4 as uuidv4 } from 'uuid';
 import emotionNormalize from 'emotion-normalize';
-import emotionReset from 'emotion-reset';
-
 import { ReactComponent as TallyLogo } from '../assets/logo.svg';
 import tippy, {followCursor} from 'tippy.js/headless';
 import {MdChevronRight} from 'react-icons/md';
@@ -61,7 +54,7 @@ const Main = () => {
   // Make sure address is valid
   useEffect(() => {
     if(address){
-      const matches = /0x[a-fA-F0-9]{40}$/.test(address)
+      const matches = /0x[a-fA-F0-9]{40}/.test(address)
       setIsValidAddress(matches);
     }
   }, [address])
@@ -146,16 +139,16 @@ const Main = () => {
       const matches = /0x[a-fA-F0-9]{40}($|\s)/.test(currentEl.textContent);
       // console.log(matches, currentEl.textContent)
       if(matches){
-        const alreadyTagged = currentEl.parentElement.classList.contains("bugga");
+        const alreadyTagged = currentEl.parentElement.classList.contains("tally-wrapper");
         if(!alreadyTagged){
           var wrapper = document.createElement("span");
           // element.parentNode.insertBefore(wrapper, element);
           // wrapper.appendChild(element);
           
-          wrapper.innerHTML = currentEl.textContent.replaceAll(/0x[a-fA-F0-9]{40}($|\s)/g, `<span class="bugga">$&</span>`);
+          wrapper.innerHTML = currentEl.textContent.replaceAll(/0x[a-fA-F0-9]{40}($|\s)/g, `<span class="tally-wrapper">$&</span>`);
 
           currentEl.replaceWith(wrapper);
-          wrapper.querySelectorAll('.bugga').forEach(el => {
+          wrapper.querySelectorAll('.tally-wrapper').forEach(el => {
             const id = uuidv4();
             el.id = "t-" + id;
             const openButton = document.createElement('button');
@@ -164,37 +157,6 @@ const Main = () => {
               e.preventDefault();
               setAddress(el.innerText)
             }
-            // let tooltipRoot = document.createElement('div');
-            // tooltipRoot.style.padding = "0 important!";
-            // tooltipRoot.style.margin = "0 important!";
-
-            // const element = (
-            //   <div css={css`
-            //     ${emotionNormalize}
-            //     display: flex;
-            //     padding: 8px !important;
-                
-            //   `}>
-            //     <TallyLogo width="40" css={css`
-            //       background: red;
-            //     `} />
-            //   </div>
-            // );
-
-            // ReactDOM.render(element, tooltipRoot);
-
-            // tippy(`#t-${id}`, {
-              
-            //   content: tooltipRoot,
-            //   interactive: true,
-            //   popperOptions: {
-            //     strategy: 'fixed',
-            //   },
-            //   followCursor: false,
-            //   plugins: [followCursor],
-            //   appendTo: () => document.body,
-            //   theme: 'light'
-            // });
 
             tippy(`#t-${id}`, {
               animation: true,
@@ -266,10 +228,14 @@ const Main = () => {
                       <div css={css`
                         margin-left: 4px;
                         margin-right: 4px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
                       `}>
                         <TallyLogo css={css`
                           width: 42px;
                           height: 24px;
+                          margin: 0;
                         `} />
                       </div>
                       <div css={css`width: 8px`} />
@@ -283,13 +249,6 @@ const Main = () => {
   
                 ReactDOM.render(<Popper />, popperRoot);
 
-                // const box = document.createElement('div');
-            
-                // popper.appendChild(box);
-            
-                // box.className = 'my-custom-class';
-                // box.textContent = instance.props.content;
-            
                 function onUpdate(prevProps, nextProps) {
                   // DOM diffing
                   // if (prevProps.content !== nextProps.content) {
@@ -365,6 +324,7 @@ const Main = () => {
                           <Body>
                             <Spacer height="40px" />
                             <Title>Please select a valid address.</Title>
+                            <Subtitle>Selected: {address}</Subtitle>
                           </Body>
                         }
                         {
@@ -457,12 +417,8 @@ const Main = () => {
                           }
                         </Body>
                         }
-                        
-                        {/* <p>Clicked Id:</p>
-                        <p>{address || "Nothing hovered"}</p> */}
                       </PopupContainer>
                     </Container>
-                  {/* </React.Fragment> */}
                 </ThemeProvider>
               </StyleSheetManager>
             )
