@@ -22,6 +22,40 @@ import CircleImageLink from '../components/elements/CircleImageLink';
 import axios from 'axios';
 import ProfilePicturePlaceholder from '../assets/ProfilePicturePlaceholder.png';
 import Button from '../components/elements/Button';
+import RecentTransaction from '../components/specialized/tallyPopup/RecentTransaction';
+import { ApolloProvider, useQuery, gql } from "@apollo/client";
+import TokenBalance from '../components/specialized/tallyPopup/TokenBalance';
+import ApolloClient from "apollo-boost"
+import SeeMore from '../components/specialized/tallyPopup/SeeMore';
+
+const {
+  REACT_APP_BITQUERY_KEY,
+  REACT_APP_ETHERSCAN_KEY
+} = process.env
+
+export const client = new ApolloClient({
+  headers: {
+    Authorization: `Bearer ${REACT_APP_BITQUERY_KEY}`,
+  },
+  uri: "https://graphql.bitquery.io",
+})
+
+const BALANCE_QUERY = gql`
+query ($address: String!) {
+  ethereum {
+    address(address: {is: $address}) {
+      balances {
+        currency {
+          symbol
+          tokenType
+          name
+        }
+        value
+      }
+    }
+  }
+}
+`;
 
 const Main = () => {
   const node = useRef();
@@ -31,6 +65,22 @@ const Main = () => {
   const [nfts, setNfts] = useState(null);
   const [tallyIdentity, setTallyIdentity] = useState(null);
   const [isValidAddress, setIsValidAddress] = useState(null);
+  const [recentTransactions, setRecentTransactions] = useState(null);
+  const {data, refetch} = useQuery(BALANCE_QUERY, {
+    variables: { 
+      address: address?.toLowerCase()
+    }
+  });
+
+  useEffect(() => {
+    if(address && isValidAddress){
+      refetch()
+    }
+  }, [address, isValidAddress, refetch])
+
+  useEffect(() => {
+    console.log("data: ", data)
+  }, [data]);
 
   // Open Tally Popup via context menu mesage from background.js
   useEffect(() => {
@@ -105,9 +155,18 @@ const Main = () => {
     }
   }, [address, isValidAddress])
 
+  // Get Recent Transactions
+  useEffect(() => {
+    if(address && isValidAddress){
+      axios.get(`https://api.etherscan.io/api?module=account&action=txlist&address=${address.toLowerCase()}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${REACT_APP_ETHERSCAN_KEY}`)
+        .then(res => {
+          setRecentTransactions(res.data.result)
+        })
+    }
+  }, [address, isValidAddress])
+
   // Handles Tally Popup close
   const handleClickOutside = e => {
-    console.log("clicking anywhere");
     if (node.current.contains(e.target)) {
       // inside click
       return;
@@ -186,7 +245,7 @@ const Main = () => {
                     <div 
                       onClick={(e) => {
                         e.preventDefault();
-                        setAddress(el.innerText)
+                        setAddress(el.innerText.replace(/[\u200B-\u200D\uFEFF]/g, '').toLowerCase())
                       }}
                       css={css`   
                         display: block;                  
@@ -275,17 +334,9 @@ const Main = () => {
   }
 
   useEffect(() => {
-    // Unique ID for the className.
-    var MOUSE_VISITED_CLASSNAME = 'crx_mouse_visited';
-
-    // Previous dom, that we want to track, so we can remove the previous styling.
-    var prevDOM = null;
-
-    // Mouse listener for any move event on the current document.
     document.addEventListener('mousemove', function (e) {
         let srcElement = e.srcElement;
         walkElement(srcElement);
-        
     }, false);
   }, [])
 
@@ -294,140 +345,200 @@ const Main = () => {
   }
 
   return (
-    <div
-      ref={node}
-      css={css`
-        position: fixed;
-        top: 0;
-        right: 0;
-        height: 580px;
-        width: 400px;
-        z-index: 100000000000 !important;
-      `}
-    >
-      <StyledFrame frameBorder="0" width="400px" height="580px" allowtransparency="true">
-        <FrameContextConsumer>
-          {
-            frameContext => (
-              <StyleSheetManager target={frameContext.document.head}>
-                <ThemeProvider theme={theme}>
-                  {/* <React.Fragment> */}
-                  <GlobalStyle /> 
-                    <Container>
-                      <PopupContainer>
-                        <Top>
-                          <Logo />
-                          <CloseButton onClick={() => setOpen(false)}/>
-                        </Top>
-                        {
-                          isValidAddress === false &&
+      <div
+        ref={node}
+        css={css`
+          position: fixed;
+          top: 0;
+          right: 0;
+          height: 580px;
+          width: 400px;
+          z-index: 100000000000 !important;
+        `}
+      >
+        <StyledFrame frameBorder="0" width="420px" height="600px" allowtransparency="true">
+          <FrameContextConsumer>
+            {
+              frameContext => (
+                <StyleSheetManager target={frameContext.document.head}>
+                  <ThemeProvider theme={theme}>
+                    {/* <React.Fragment> */}
+                    <GlobalStyle /> 
+                      <Container>
+                        <PopupContainer>
+                          <Top>
+                            <Logo />
+                            <CloseButton onClick={() => setOpen(false)}/>
+                          </Top>
+                          {
+                            isValidAddress === false &&
+                            <Body>
+                              <Spacer height="40px" />
+                              <Title>Please select a valid address.</Title>
+                              <Subtitle>Selected: {address}</Subtitle>
+                            </Body>
+                          }
+                          {
+                          isValidAddress &&
                           <Body>
+                            {
+                              tallyIdentity && tallyIdentity.avatarUrl !== "" ?
+                              <Avatar url={tallyIdentity.avatarUrl}/>
+                              :
+                              <Avatar url={ProfilePicturePlaceholder} />
+                            }
+                            <Spacer height="20px" />
+                            {
+                              tallyIdentity &&
+                              <Subtitle>{tallyIdentity.displayName}</Subtitle>
+                            }
+                            <Subtitle>{address.substr(0,8)}...{address.substr(-6)}</Subtitle>
+                            <Spacer height="32px" />
+                            {
+                              tallyIdentity?.tallyId &&
+                              <React.Fragment>
+                                <Button as="a" href={`https://www.withtally.com/voter/profile/${tallyIdentity.tallyId}`} target="_blank" rel="noopener noreferrer">
+                                  <Button.Text>
+                                    View Complete Profile On Tally
+                                  </Button.Text>
+                                </Button>
+                                <Spacer height="32px" />
+                              </React.Fragment>
+                            }
+                            {
+                              poaps &&
+                              <GroupContainer>
+                                <GroupContent>
+                                  <Title>POAPs</Title>
+                                  <Subtitle>Holding {poaps.length} POAPs</Subtitle>
+                                  <Spacer height="20px" />
+                                  <CircleImageGroup>
+                                    {
+                                      poaps.map(poap => (
+                                        <CircleImageLink 
+                                          key={`poap-${poap.tokenId}-${poap.event.name}`} 
+                                          href={`https://app.poap.xyz/token/${poap.tokenId}`} 
+                                          imageUrl={poap.event.image_url}
+                                          name={poap.event.name}
+                                        />
+                                      ))
+                                    }
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                  </CircleImageGroup>  
+                                  <SeeMore url={`https://app.poap.xyz/scan/${address}`}/>
+                                </GroupContent>
+                              </GroupContainer>
+                            }
+                            <Spacer height="20px" />
+                            {
+                              nfts &&
+                              <GroupContainer>
+                                <GroupContent>
+                                  <Title>NFTs</Title>
+                                  <Subtitle>Holding {nfts.length}{nfts.length === 50 ? '+' : ''} NFTs</Subtitle>
+                                  <Spacer height="20px" />
+                                  <CircleImageGroup>
+                                    {
+                                      nfts.map(nft => (
+                                        <CircleImageLink 
+                                          key={`nft-${nft.token_id}-${nft.name}`} 
+                                          href={nft.permalink} 
+                                          imageUrl={nft.image_thumbnail_url}
+                                          name={nft.name}
+                                        />
+                                      ))
+                                    }
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                    <Spacer height="0" width="72px" />
+                                  </CircleImageGroup> 
+                                  <SeeMore url={`https://opensea.io/${address}`}/>  
+                                </GroupContent>
+                              </GroupContainer>
+                            }
+                            <Spacer height="8px" />
+                            {
+                              recentTransactions &&
+                              <GroupContainer>
+                                <GroupContent>
+                                  
+                                  <Title>Recent Transactions</Title>
+                                  <Spacer height="20px" />
+                                  {
+                                    recentTransactions.map(recentTransaction => (
+                                      <React.Fragment key={`recentTransaction-${recentTransaction.hash}`} >
+                                        <RecentTransaction
+                                          href={`https://etherscan.io/tx/${recentTransaction.hash}`}
+                                          direction={recentTransaction.to === address.toLowerCase() ? 'IN' : 'OUT'}
+                                          timestamp={recentTransaction.timeStamp}
+                                          value={recentTransaction.value}
+                                        />
+                                        <Spacer height="8px" />
+                                      </React.Fragment>
+                                    ))
+                                  }
+                                  <SeeMore url={`https://etherscan.io/address/${address}`}/>  
+                                </GroupContent>
+                              </GroupContainer>
+                            }
+                            <Spacer height="8px" />
+                            {
+                              data && data?.ethereum?.address[0]?.balances.length > 0 &&
+                              <GroupContainer>
+                                <GroupContent>
+                                  <Title>ERC20 Tokens</Title>
+                                  <Spacer height="20px" />
+                                  <TokenGroup>
+                                  {
+                                    data.ethereum.address[0].balances.map(token => (
+                                      <TokenContainer key={`token-${token.currency.name}`}>
+                                        <TokenBalance 
+                                          name={token.currency.name} 
+                                          symbol={token.currency.symbol}
+                                          balance={token.value}
+                                        />
+                                      </TokenContainer>
+                                    ))
+                                  }
+                                  </TokenGroup>
+                                </GroupContent>
+                              </GroupContainer>
+                            }
                             <Spacer height="40px" />
-                            <Title>Please select a valid address.</Title>
-                            <Subtitle>Selected: {address}</Subtitle>
                           </Body>
-                        }
-                        {
-                        isValidAddress &&
-                        <Body>
-                          {
-                            tallyIdentity && tallyIdentity.avatarUrl !== "" ?
-                            <Avatar url={tallyIdentity.avatarUrl}/>
-                            :
-                            <Avatar url={ProfilePicturePlaceholder} />
                           }
-                          <Spacer height="20px" />
-                          {
-                            tallyIdentity &&
-                            <Subtitle>{tallyIdentity.displayName}</Subtitle>
-                          }
-                          <Subtitle>{address.substr(0,8)}...{address.substr(-6)}</Subtitle>
-                          <Spacer height="32px" />
-                          {
-                            tallyIdentity?.tallyId &&
-                            <React.Fragment>
-                              <Button as="a" href={`https://www.withtally.com/voter/profile/${tallyIdentity.tallyId}`} target="_blank" rel="noopener noreferrer">
-                                <Button.Text>
-                                  View Complete Profile On Tally
-                                </Button.Text>
-                              </Button>
-                              <Spacer height="32px" />
-                            </React.Fragment>
-                          }
-                          {
-                            poaps &&
-                            <GroupContainer>
-                              <GroupContent>
-                                <Title>POAPs</Title>
-                                <Subtitle>Holding {poaps.length} POAPs</Subtitle>
-                                <Spacer height="20px" />
-                                <CircleImageGroup>
-                                  {
-                                    poaps.map(poap => (
-                                      <CircleImageLink 
-                                        key={`poap-${poap.tokenId}-${poap.event.name}`} 
-                                        href={`https://app.poap.xyz/token/${poap.tokenId}`} 
-                                        imageUrl={poap.event.image_url}
-                                        name={poap.event.name}
-                                      />
-                                    ))
-                                  }
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                </CircleImageGroup>   
-                              </GroupContent>
-                            </GroupContainer>
-                          }
-                          <Spacer height="20px" />
-                          {
-                            nfts &&
-                            <GroupContainer>
-                              <GroupContent>
-                                <Title>NFTs</Title>
-                                <Subtitle>Holding {nfts.length}{nfts.length === 50 ? '+' : ''} NFTs</Subtitle>
-                                <Spacer height="20px" />
-                                <CircleImageGroup>
-                                  {
-                                    nfts.map(nft => (
-                                      <CircleImageLink 
-                                        key={`nft-${nft.token_id}-${nft.name}`} 
-                                        href={nft.permalink} 
-                                        imageUrl={nft.image_thumbnail_url}
-                                        name={nft.name}
-                                      />
-                                    ))
-                                  }
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                  <Spacer height="0" width="72px" />
-                                </CircleImageGroup>   
-                              </GroupContent>
-                            </GroupContainer>
-                          }
-                        </Body>
-                        }
-                      </PopupContainer>
-                    </Container>
-                </ThemeProvider>
-              </StyleSheetManager>
-            )
-          }
-        </FrameContextConsumer>
-      </StyledFrame>
-    </div>
+                        </PopupContainer>
+                      </Container>
+                  </ThemeProvider>
+                </StyleSheetManager>
+              )
+            }
+          </FrameContextConsumer>
+        </StyledFrame>
+      </div>
   )
 }
+const TokenGroup = styled.div`
+  display: grid;
+  grid-template-columns: 50% 50%;
+  grid-column-gap: 8px;
+  grid-row-gap: 8px;
+`
+const TokenContainer = styled.div`
+  width: 100%;
+`
 
 const StyledFrame = styled(Frame)`
 
@@ -545,4 +656,4 @@ const GlobalStyle = createGlobalStyle`
 const app = document.createElement('div');
 app.id = "my-extension-root";
 document.body.appendChild(app);
-ReactDOM.render(<Main />, app);
+ReactDOM.render(<ApolloProvider client={client}><Main /></ApolloProvider>, app);
