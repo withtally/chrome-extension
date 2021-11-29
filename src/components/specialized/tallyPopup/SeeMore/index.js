@@ -1,17 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const SeeMore = ({url, ...rest}) => {
-  return(
+const SeeMore = function ({ url, ...rest }) {
+  return (
     <Anchor href={url} target="_blank" rel="noopener noreferrer" {...rest}>
       See More
     </Anchor>
-  )
-}
+  );
+};
 
 const Anchor = styled.a`
   align-self: flex-end;
-  color: ${props => props.theme.primary};
+  color: ${(props) => props.theme.primary};
   font-family: Montserrat;
   font-style: normal;
   font-weight: bold;
@@ -28,9 +28,8 @@ const Anchor = styled.a`
   text-decoration: none;
 
   &:hover {
-    background-color: ${props => props.theme.grey100}
+    background-color: ${(props) => props.theme.grey100};
   }
-  
-`
+`;
 
 export default SeeMore;

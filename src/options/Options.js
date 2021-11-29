@@ -1,9 +1,9 @@
-import './Options.css';
-import { ReactComponent as TallyLogo } from '../assets/logo.svg';
+import React from 'react';
 import styled from 'styled-components';
+import { ReactComponent as TallyLogo } from '../assets/logo.svg';
 import Spacer from '../components/materials/Spacer';
 
-function Options() {
+const Options = function () {
   return (
     <ScreenContainer>
       <Content>
@@ -17,7 +17,7 @@ function Options() {
       </Content>
     </ScreenContainer>
   );
-}
+};
 
 const Anchor = styled.a`
   font-family: Montserrat;
@@ -30,9 +30,9 @@ const Anchor = styled.a`
   text-align: center;
   letter-spacing: 0.25px;
 
-  color: #725BFF;
+  color: #725bff;
   text-decoration: none;
-`
+`;
 
 const Text = styled.p`
   font-family: Montserrat;
@@ -47,7 +47,7 @@ const Text = styled.p`
   margin: 0;
 
   color: #000000;
-`
+`;
 
 const Content = styled.div`
   display: flex;

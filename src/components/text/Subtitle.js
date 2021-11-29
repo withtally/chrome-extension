@@ -1,11 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Subtitle = ({children, ...rest}) => {
-  return(
-    <Span {...rest}>{children}</Span>
-  )
-}
+const Subtitle = ({ children, ...rest }) => {
+  return <Span {...rest}>{children}</Span>;
+};
 
 const Span = styled.span`
   font-family: Montserrat;
@@ -19,6 +17,6 @@ const Span = styled.span`
   letter-spacing: 0.25px;
 
   color: #000000;
-`
+`;
 
 export default Subtitle;

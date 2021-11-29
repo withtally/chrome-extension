@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const Button = styled.button`
   text-decoration: none;
-  background-color: ${props => props.theme.primary};
+  background-color: ${(props) => props.theme.primary};
   padding: 20px;
   border: none;
 
@@ -11,9 +11,9 @@ export const Button = styled.button`
   justify-content: center;
   cursor: pointer;
   &:hover {
-    opacity: .8;
+    opacity: 0.8;
   }
-`
+`;
 
 export const ButtonText = styled.span`
   font-family: Montserrat;
@@ -28,12 +28,12 @@ export const ButtonText = styled.span`
   text-align: center;
   letter-spacing: 0.25px;
 
-  color: #FFFFFF;
-`
+  color: #ffffff;
+`;
 
 Button.defaultProps = {
   theme: {
-    primary: "blue",
-    grey200: "light-grey",
-  }
-}
+    primary: 'blue',
+    grey200: 'light-grey',
+  },
+};

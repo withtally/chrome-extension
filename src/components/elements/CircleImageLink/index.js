@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react/prop-types */
+import React from 'react';
 import styled from 'styled-components';
 
-const CircleImageLink = ({href, imageUrl, name}) => {
-  return(
+const CircleImageLink = function ({ href, imageUrl, name }) {
+  return (
     <Link href={href} target="_blank" rel="noopener noreferrer">
-      <Image alt={name} title={name} src={imageUrl}/>
+      <Image alt={name} title={name} src={imageUrl} />
     </Link>
-  )
-}
+  );
+};
 
-const Link = styled.a`
-
-`
+const Link = styled.a``;
 
 const Image = styled.img`
   width: 72px;
@@ -21,9 +20,8 @@ const Image = styled.img`
   transition: all 200ms;
 
   &:hover {
-    border: solid #725BFF 4px;
+    border: solid #725bff 4px;
   }
-  
-`
+`;
 
 export default CircleImageLink;

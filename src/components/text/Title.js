@@ -1,11 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const Title = ({children, ...rest}) => {
-  return(
-    <Span {...rest}>{children}</Span>
-  )
-}
+const Title = ({ children, ...rest }) => {
+  return <Span {...rest}>{children}</Span>;
+};
 
 const Span = styled.span`
   font-family: Montserrat;
@@ -18,6 +16,6 @@ const Span = styled.span`
   display: flex;
   align-items: center;
   letter-spacing: 0.25px;
-`
+`;
 
 export default Title;

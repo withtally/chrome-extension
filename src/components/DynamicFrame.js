@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, RefObject } from "react";
-import Frame from "react-frame-component";
+import React, { useState, useEffect, useCallback, RefObject } from 'react';
+import Frame from 'react-frame-component';
 
 export const DynamicFrame = (props) => {
   const { children } = props;

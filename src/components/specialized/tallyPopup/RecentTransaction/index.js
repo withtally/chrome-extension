@@ -1,24 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
+import formatDistance from 'date-fns/formatDistance';
+import { MdChevronRight } from 'react-icons/md';
+import Color from 'color';
 import Spacer from '../../../materials/Spacer';
 import Subtitle from '../../../text/Subtitle';
 import Title from '../../../text/Title';
-import formatDistance from 'date-fns/formatDistance'
-import { MdChevronRight } from 'react-icons/md';
-import Color from 'color';
 
-const RecentTransaction = ({direction, href, value, timestamp}) => {
+const RecentTransaction = function ({ direction, href, value, timestamp }) {
   const [hovered, setHovered] = useState(false);
-  return(
+  return (
     <Container
-      href={href} target="_blank" rel="noopener noreferrer"
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} hovered={hovered}>
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      hovered={hovered}
+    >
       <Content>
-        <Tag direction={direction}>
-          {direction}
-        </Tag>
+        <Tag direction={direction}>{direction}</Tag>
         <Spacer height="8px" />
-        <Title>{value /= Math.pow(10, 18)} Ether</Title>
+        <Title>{(value /= 10 ** 18)} Ether</Title>
         <Spacer height="2px" />
         <Subtitle>{formatDistance(timestamp * 1000, new Date())} ago</Subtitle>
       </Content>
@@ -26,13 +29,13 @@ const RecentTransaction = ({direction, href, value, timestamp}) => {
         <MdChevronRight color={hovered ? 'white' : 'black'} size="32px" />
       </ArrowContainer>
     </Container>
-  )
-}
+  );
+};
 
 const ArrowContainer = styled.div`
   width: 56px;
   height: 56px;
-  background-color: ${props => props.hovered ? props.theme.primary : "rgba(0,0,0,0.02)" };
+  background-color: ${(props) => (props.hovered ? props.theme.primary : 'rgba(0,0,0,0.02)')};
   border-radius: 56px;
   display: flex;
   align-items: center;
@@ -44,10 +47,11 @@ const Content = styled.div`
   flex-direction: column;
   align-items: flex-start;
   flex: 1;
-`
+`;
 
 const Tag = styled.div`
-  background-color: ${props => props.direction === 'IN' ? props.theme.accent1 : props.theme.accent2};
+  background-color: ${(props) =>
+    props.direction === 'IN' ? props.theme.accent1 : props.theme.accent2};
   padding: 4px 10px;
   border-radius: 4px;
 
@@ -63,11 +67,14 @@ const Tag = styled.div`
   text-align: center;
   letter-spacing: 0.25px;
 
-  color: #FFFFFF;
-`
+  color: #ffffff;
+`;
 
 const Container = styled.a`
-  background-color: ${props => props.hovered ? Color(props.theme.lightBackground).darken(0.08).rgb().string() : props.theme.lightBackground};
+  background-color: ${(props) =>
+    props.hovered
+      ? Color(props.theme.lightBackground).darken(0.08).rgb().string()
+      : props.theme.lightBackground};
   padding: 10px 16px;
   border-radius: 8px;
   display: flex;

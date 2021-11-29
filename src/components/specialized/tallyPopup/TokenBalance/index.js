@@ -5,8 +5,8 @@ import Subtitle from '../../../text/Subtitle';
 import Title from '../../../text/Title';
 import Color from 'color';
 
-const TokenBalance = ({name, symbol, balance}) => {
-  return(
+const TokenBalance = ({ name, symbol, balance }) => {
+  return (
     <Container title={name}>
       <Content>
         <Subtitle>{symbol}</Subtitle>
@@ -14,8 +14,8 @@ const TokenBalance = ({name, symbol, balance}) => {
         <Title title={balance}>{balance}</Title>
       </Content>
     </Container>
-  )
-}
+  );
+};
 
 const Content = styled.div`
   display: flex;
@@ -23,10 +23,13 @@ const Content = styled.div`
   align-items: flex-start;
   flex: 1;
   overflow: hidden;
-`
+`;
 
 const Container = styled.a`
-  background-color: ${props => props.hovered ? Color(props.theme.lightBackground).darken(0.08).rgb().string() : props.theme.lightBackground};
+  background-color: ${(props) =>
+    props.hovered
+      ? Color(props.theme.lightBackground).darken(0.08).rgb().string()
+      : props.theme.lightBackground};
   padding: 10px 16px;
   border-radius: 8px;
   display: flex;
