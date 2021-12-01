@@ -314,7 +314,9 @@ const Main = () => {
                     )}
                     {isValidAddress && (
                       <Body>
-                        {tallyIdentity && tallyIdentity.avatarUrl !== '' ? (
+                        {tallyIdentity &&
+                        tallyIdentity.avatarUrl !== '' &&
+                        tallyIdentity.avatarUrl !== null ? (
                           <Avatar url={tallyIdentity.avatarUrl} />
                         ) : (
                           <Avatar url={ProfilePicturePlaceholder} />
@@ -462,12 +464,14 @@ const Main = () => {
     </Modal>
   );
 };
+
 const TokenGroup = styled.div`
   display: grid;
   grid-template-columns: 50% 50%;
   grid-column-gap: 8px;
   grid-row-gap: 8px;
 `;
+
 const TokenContainer = styled.div`
   width: 100%;
 `;
