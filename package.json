@@ -1,6 +1,6 @@
 {
   "name": "tally-tool",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.4.17",

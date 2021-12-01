@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "version": "0.0.4",
+  "version": "0.0.5",
   "short_name": "Tally",
   "name": "Tally",
-  "description": "Tally Chrome extension.",
+  "description": "A tool to display more information about an Ethereum address.",
   "browser_action": {
     "default_title": "Tally",
     "default_popup": "popup.html"

@@ -20,41 +20,17 @@ import axios from 'axios';
 import ProfilePicturePlaceholder from '../assets/ProfilePicturePlaceholder.png';
 import Button from '../components/elements/Button';
 import RecentTransaction from '../components/specialized/tallyPopup/RecentTransaction';
-import { ApolloProvider, useQuery, gql } from '@apollo/client';
 import TokenBalance from '../components/specialized/tallyPopup/TokenBalance';
-import ApolloClient from 'apollo-boost';
 import SeeMore from '../components/specialized/tallyPopup/SeeMore';
 
 // eslint-disable-next-line no-undef
 const montserratFont = chrome.runtime.getURL('fonts/Montserrat-Regular.ttf');
 // eslint-disable-next-line no-undef
 const montserratFontBold = chrome.runtime.getURL('fonts/Montserrat-Bold.ttf');
+// eslint-disable-next-line no-undef
+const montserratFontSemiBold = chrome.runtime.getURL('fonts/Montserrat-SemiBold.ttf');
 
-const { REACT_APP_BITQUERY_KEY, REACT_APP_ETHERSCAN_KEY } = process.env;
-
-export const client = new ApolloClient({
-  headers: {
-    Authorization: `Bearer ${REACT_APP_BITQUERY_KEY}`,
-  },
-  uri: 'https://graphql.bitquery.io',
-});
-
-const BALANCE_QUERY = gql`
-  query ($address: String!) {
-    ethereum {
-      address(address: { is: $address }) {
-        balances {
-          currency {
-            symbol
-            tokenType
-            name
-          }
-          value
-        }
-      }
-    }
-  }
-`;
+const { REACT_APP_ETHERSCAN_KEY } = process.env;
 
 const Main = () => {
   const node = useRef();
@@ -65,33 +41,41 @@ const Main = () => {
   const [tallyIdentity, setTallyIdentity] = useState(null);
   const [isValidAddress, setIsValidAddress] = useState(null);
   const [recentTransactions, setRecentTransactions] = useState(null);
-  const { data, refetch } = useQuery(BALANCE_QUERY, {
-    variables: {
-      address: address?.toLowerCase(),
-    },
-  });
+  const [balanceData, setBalanceData] = useState(null);
 
   useEffect(() => {
     if (address && isValidAddress) {
-      refetch();
+      // eslint-disable-next-line no-undef
+      chrome.runtime.sendMessage({
+        type: 'bitquery-address',
+        address,
+      });
     }
-  }, [address, isValidAddress, refetch]);
+  }, [address, isValidAddress]);
 
   useEffect(() => {
-    console.log('data: ', data);
-  }, [data]);
-
-  // Open Tally Popup via context menu mesage from background.js
-  useEffect(() => {
+    // Open Tally Popup via context menu mesage from background.js
     // eslint-disable-next-line no-undef
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      setTimeout(function () {
-        sendResponse({ status: true });
-      }, 1);
-      setAddress(message);
-      return true;
+      if (message.type === 'selection-text') {
+        setAddress(message.payload);
+        sendResponse();
+        return true;
+      }
     });
-  }, []);
+
+    // Get response from bitquery
+    // eslint-disable-next-line no-undef
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.type === 'bitquery-response') {
+        if (address === message.payload.address) {
+          setBalanceData(message.payload.data);
+        }
+        sendResponse();
+        return true;
+      }
+    });
+  }, [address]);
 
   // Open Tally Popup when address changes
   useEffect(() => {
@@ -116,6 +100,7 @@ const Main = () => {
       setNfts(null);
       setTallyIdentity(null);
       setIsValidAddress(null);
+      setBalanceData(null);
     }
   }, [open]);
 
@@ -308,23 +293,7 @@ const Main = () => {
 
   return (
     <Modal ref={node}>
-      <StyledFrame
-        frameBorder="0"
-        width="420px"
-        height="600px"
-        allowtransparency="true"
-        // head={
-        //   <>
-        //     <link rel="preconnect" href="https://fonts.googleapis.com" />
-        //     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        //     <link
-        //       href={'https://fonts.googleapis.com/css2?family=Montserrat&display=swap'}
-        //       rel="stylesheet"
-        //     />
-        //     <title>Tally</title>
-        //   </>
-        // }
-      >
+      <StyledFrame frameBorder="0" width="420px" height="600px" allowtransparency="true">
         <FrameContextConsumer>
           {(frameContext) => (
             <StyleSheetManager target={frameContext.document.head}>
@@ -455,13 +424,13 @@ const Main = () => {
                           </GroupContainer>
                         )}
                         <Spacer height="8px" />
-                        {data && data?.ethereum?.address[0]?.balances.length > 0 && (
+                        {balanceData && balanceData?.ethereum?.address[0]?.balances.length > 0 && (
                           <GroupContainer>
                             <GroupContent>
                               <Title>ERC20 Tokens</Title>
                               <Spacer height="20px" />
                               <TokenGroup>
-                                {data.ethereum.address[0].balances
+                                {balanceData.ethereum.address[0].balances
                                   .filter(
                                     (item, index, self) =>
                                       index ===
@@ -601,6 +570,13 @@ const GlobalStyle = createGlobalStyle`
   @font-face {
     font-family: 'Montserrat';
     src: local('Montserrat'),
+      url(${montserratFontSemiBold}) format('truetype');
+    font-weight: 600;
+  }
+
+  @font-face {
+    font-family: 'Montserrat';
+    src: local('Montserrat'),
       url(${montserratFontBold}) format('truetype');
     font-weight: bold;
   }
@@ -686,9 +662,4 @@ const StyledTallyLogo = styled(TallyLogo)`
 const app = document.createElement('div');
 app.id = 'my-extension-root';
 document.body.appendChild(app);
-ReactDOM.render(
-  <ApolloProvider client={client}>
-    <Main />
-  </ApolloProvider>,
-  app
-);
+ReactDOM.render(<Main />, app);
