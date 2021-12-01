@@ -1,3 +1,5 @@
+import '../fonts/Montserrat-Regular.ttf';
+import './Options.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Options from './Options';

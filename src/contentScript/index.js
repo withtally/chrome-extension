@@ -25,6 +25,11 @@ import TokenBalance from '../components/specialized/tallyPopup/TokenBalance';
 import ApolloClient from 'apollo-boost';
 import SeeMore from '../components/specialized/tallyPopup/SeeMore';
 
+// eslint-disable-next-line no-undef
+const montserratFont = chrome.runtime.getURL('fonts/Montserrat-Regular.ttf');
+// eslint-disable-next-line no-undef
+const montserratFontBold = chrome.runtime.getURL('fonts/Montserrat-Bold.ttf');
+
 const { REACT_APP_BITQUERY_KEY, REACT_APP_ETHERSCAN_KEY } = process.env;
 
 export const client = new ApolloClient({
@@ -308,17 +313,17 @@ const Main = () => {
         width="420px"
         height="600px"
         allowtransparency="true"
-        head={
-          <>
-            <link rel="preconnect" href="https://fonts.googleapis.com" />
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-            <link
-              href={'https://fonts.googleapis.com/css2?family=Montserrat&display=swap'}
-              rel="stylesheet"
-            />
-            <title>Tally</title>
-          </>
-        }
+        // head={
+        //   <>
+        //     <link rel="preconnect" href="https://fonts.googleapis.com" />
+        //     <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        //     <link
+        //       href={'https://fonts.googleapis.com/css2?family=Montserrat&display=swap'}
+        //       rel="stylesheet"
+        //     />
+        //     <title>Tally</title>
+        //   </>
+        // }
       >
         <FrameContextConsumer>
           {(frameContext) => (
@@ -586,7 +591,22 @@ const Body = styled.div`
 `;
 
 const GlobalStyle = createGlobalStyle`
+  @font-face {
+    font-family: 'Montserrat';
+    src: local('Montserrat'),
+      url(${montserratFont}) format('truetype');
+    font-weight: normal;
+  }
+
+  @font-face {
+    font-family: 'Montserrat';
+    src: local('Montserrat'),
+      url(${montserratFontBold}) format('truetype');
+    font-weight: bold;
+  }
+
   body, html {
+    font-family: 'Montserrat';
     height: 100%;
     margin: 0;
     padding: 0;
