@@ -50,7 +50,6 @@ chrome.runtime.onInstalled.addListener(function () {
 
 chrome.contextMenus.onClicked.addListener(function (info, tab) {
   if (info.menuItemId === 'tally-open') {
-    console.log(info);
     processSelection(info);
   }
 });
