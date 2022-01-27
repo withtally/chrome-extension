@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import Frame, { FrameContextConsumer } from 'react-frame-component';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +22,7 @@ import Button from '../components/elements/Button';
 import RecentTransaction from '../components/specialized/tallyPopup/RecentTransaction';
 import TokenBalance from '../components/specialized/tallyPopup/TokenBalance';
 import SeeMore from '../components/specialized/tallyPopup/SeeMore';
+import { ethers } from 'ethers';
 
 // eslint-disable-next-line no-undef
 const montserratFont = chrome.runtime.getURL('fonts/Montserrat-Regular.ttf');
@@ -31,6 +32,7 @@ const montserratFontBold = chrome.runtime.getURL('fonts/Montserrat-Bold.ttf');
 const montserratFontSemiBold = chrome.runtime.getURL('fonts/Montserrat-SemiBold.ttf');
 
 const { REACT_APP_ETHERSCAN_KEY } = process.env;
+const provider = new ethers.providers.CloudflareProvider();
 
 const Main = () => {
   const node = useRef();
@@ -40,8 +42,10 @@ const Main = () => {
   const [nfts, setNfts] = useState(null);
   const [tallyIdentity, setTallyIdentity] = useState(null);
   const [isValidAddress, setIsValidAddress] = useState(null);
+  const [input, setInput] = useState(null);
   const [recentTransactions, setRecentTransactions] = useState(null);
   const [balanceData, setBalanceData] = useState(null);
+  const [ensName, setEnsName] = useState(null);
 
   useEffect(() => {
     if (address && isValidAddress) {
@@ -58,7 +62,7 @@ const Main = () => {
     // eslint-disable-next-line no-undef
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.type === 'selection-text') {
-        setAddress(message.payload);
+        setInput(message.payload);
         sendResponse();
         return true;
       }
@@ -77,20 +81,50 @@ const Main = () => {
     });
   }, [address]);
 
-  // Open Tally Popup when address changes
+  // Open Tally Popup when input changes
+  useEffect(() => {
+    if (input) {
+      setOpen(true);
+    }
+  }, [input]);
+
+  const handleInput = useCallback(async (input) => {
+    if (input) {
+      const matchesAddress = /0x[a-fA-F0-9]{40}/.test(input);
+      if (matchesAddress) {
+        setIsValidAddress(true);
+        setAddress(input);
+      } else {
+        const matchesEnsName = /\S+\.eth/.test(input);
+        if (matchesEnsName) {
+          const resolvedAddress = await provider.resolveName(input);
+          if (resolvedAddress) {
+            setEnsName(input);
+            setAddress(resolvedAddress);
+          } else {
+            setIsValidAddress(false);
+          }
+        } else {
+          setIsValidAddress(false);
+        }
+      }
+    }
+  }, []);
+
+  // If an address is set, make sure it is valid
   useEffect(() => {
     if (address) {
-      setOpen(true);
+      const matchesAddress = /0x[a-fA-F0-9]{40}/.test(address);
+      if (matchesAddress) {
+        setIsValidAddress(true);
+      }
     }
   }, [address]);
 
-  // Make sure address is valid
+  // Handle new text input
   useEffect(() => {
-    if (address) {
-      const matches = /0x[a-fA-F0-9]{40}/.test(address);
-      setIsValidAddress(matches);
-    }
-  }, [address]);
+    handleInput(input);
+  }, [handleInput, input]);
 
   // When Tally Popup closes, reset values
   useEffect(() => {
@@ -101,6 +135,8 @@ const Main = () => {
       setTallyIdentity(null);
       setIsValidAddress(null);
       setBalanceData(null);
+      setInput(null);
+      setEnsName(null);
     }
   }, [open]);
 
@@ -184,17 +220,25 @@ const Main = () => {
     while (element) {
       const currentEl = element;
       element = walker.nextNode();
-      const matches = /0x[a-fA-F0-9]{40}($|\s)/.test(currentEl.textContent);
+      const matchesAddress = /0x[a-fA-F0-9]{40}($|\s)/.test(currentEl.textContent);
+      const matchesEnsName = /\S+\.eth/.test(currentEl.textContent);
       // console.log(matches, currentEl.textContent);
-      if (matches) {
+      if (matchesAddress || matchesEnsName) {
         const alreadyTagged = currentEl.parentElement.classList.contains('tally-wrapper');
         if (!alreadyTagged) {
           var wrapper = document.createElement('span');
 
-          wrapper.innerHTML = currentEl.textContent.replaceAll(
-            /0x[a-fA-F0-9]{40}($|\s)/g,
-            `<span class="tally-wrapper">$&</span>`
-          );
+          if (matchesAddress) {
+            wrapper.innerHTML = currentEl.textContent.replaceAll(
+              /0x[a-fA-F0-9]{40}($|\s)/g,
+              `<span class="tally-wrapper">$&</span>`
+            );
+          } else if (matchesEnsName) {
+            wrapper.innerHTML = currentEl.textContent.replaceAll(
+              /\S+\.eth/g,
+              `<span class="tally-wrapper">$&</span>`
+            );
+          }
 
           currentEl.replaceWith(wrapper);
           wrapper.querySelectorAll('.tally-wrapper').forEach((el) => {
@@ -227,9 +271,7 @@ const Main = () => {
                         hovered={hovered}
                         onClick={(e) => {
                           e.preventDefault();
-                          setAddress(
-                            el.innerText.replace(/[\u200B-\u200D\uFEFF]/g, '').toLowerCase()
-                          );
+                          setInput(el.innerText.replace(/[\u200B-\u200D\uFEFF]/g, ''));
                         }}
                         onMouseEnter={() => {
                           setHovered(true);
@@ -309,7 +351,7 @@ const Main = () => {
                       <Body>
                         <Spacer height="40px" />
                         <Title>Please select a valid address.</Title>
-                        <Subtitle>Selected: {address}</Subtitle>
+                        <Subtitle>Selected: {input}</Subtitle>
                       </Body>
                     )}
                     {isValidAddress && (
@@ -323,6 +365,9 @@ const Main = () => {
                         )}
                         <Spacer height="20px" />
                         {tallyIdentity && <Subtitle>{tallyIdentity.displayName}</Subtitle>}
+                        {ensName && ensName !== tallyIdentity?.displayName && (
+                          <Subtitle>{ensName}</Subtitle>
+                        )}
                         <Subtitle>
                           {address.substr(0, 8)}...{address.substr(-6)}
                         </Subtitle>
