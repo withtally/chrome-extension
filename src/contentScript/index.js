@@ -471,7 +471,7 @@ const Main = () => {
                           </GroupContainer>
                         )}
                         <Spacer height="8px" />
-                        {balanceData && balanceData?.ethereum?.address[0]?.balances.length > 0 && (
+                        {balanceData && balanceData?.ethereum?.address[0]?.balances?.length > 0 && (
                           <GroupContainer>
                             <GroupContent>
                               <Title>ERC20 Tokens</Title>
