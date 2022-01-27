@@ -38,12 +38,21 @@ function processSelection(info) {
   });
 }
 
-const parent = chrome.contextMenus.create({ title: 'Tally', contexts: ['selection'] });
-chrome.contextMenus.create({
-  title: 'Open',
-  parentId: parent,
-  onclick: processSelection,
-  contexts: ['selection'],
+chrome.runtime.onInstalled.addListener(function () {
+  chrome.contextMenus.create({ id: 'tally-menu', title: 'Tally', contexts: ['selection'] });
+  chrome.contextMenus.create({
+    id: 'tally-open',
+    title: 'Open',
+    parentId: 'tally-menu',
+    contexts: ['selection'],
+  });
+});
+
+chrome.contextMenus.onClicked.addListener(function (info, tab) {
+  if (info.menuItemId === 'tally-open') {
+    console.log(info);
+    processSelection(info);
+  }
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
