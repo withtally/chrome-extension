@@ -1,15 +1,15 @@
 {
-  "manifest_version": 2,
-  "version": "0.1.1",
+  "manifest_version": 3,
+  "version": "0.2.1",
   "short_name": "Tally",
   "name": "Tally",
   "description": "A tool to display more information about an Ethereum address.",
-  "browser_action": {
+  "action": {
     "default_title": "Tally",
     "default_popup": "popup.html"
   },
   "background": {
-    "scripts": ["background.bundle.js"]
+    "service_worker": "background.bundle.js"
   },
   "content_scripts": [
     {
@@ -24,6 +24,10 @@
   },
   "options_page": "options.html",
   "permissions": ["activeTab", "contextMenus"],
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-  "web_accessible_resources": ["fonts/*.*"]
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/*.*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
