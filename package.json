@@ -1,6 +1,6 @@
 {
   "name": "tally-chrome-extension",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "description": "A tool for exploring the DAO participation, token holdings, NFT's and POAPS of ENS and Ethereum addresses",
   "author": "Tally <hello@withTally.com> (https://www.withTally.com)",
   "license": "MIT",

@@ -31,7 +31,6 @@ const montserratFontBold = chrome.runtime.getURL('fonts/Montserrat-Bold.ttf');
 // eslint-disable-next-line no-undef
 const montserratFontSemiBold = chrome.runtime.getURL('fonts/Montserrat-SemiBold.ttf');
 
-const { REACT_APP_ETHERSCAN_KEY } = process.env;
 const provider = new ethers.providers.CloudflareProvider();
 
 const Main = () => {
@@ -48,33 +47,11 @@ const Main = () => {
   const [ensName, setEnsName] = useState(null);
 
   useEffect(() => {
-    if (address && isValidAddress) {
-      // eslint-disable-next-line no-undef
-      chrome.runtime.sendMessage({
-        type: 'bitquery-address',
-        address,
-      });
-    }
-  }, [address, isValidAddress]);
-
-  useEffect(() => {
     // Open Tally Popup via context menu mesage from background.js
     // eslint-disable-next-line no-undef
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.type === 'selection-text') {
         setInput(message.payload);
-        sendResponse();
-        return true;
-      }
-    });
-
-    // Get response from bitquery
-    // eslint-disable-next-line no-undef
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.type === 'bitquery-response') {
-        if (address === message.payload.address) {
-          setBalanceData(message.payload.data);
-        }
         sendResponse();
         return true;
       }
@@ -140,19 +117,6 @@ const Main = () => {
     }
   }, [open]);
 
-  // Get NFTs
-  useEffect(() => {
-    if (address && isValidAddress) {
-      axios
-        .get(
-          `https://api.opensea.io/api/v1/assets?owner=${address.toLowerCase()}&order_direction=desc&offset=0&limit=50`
-        )
-        .then((res) => {
-          setNfts(res.data.assets);
-        });
-    }
-  }, [address, isValidAddress]);
-
   // Get Tally Identity
   useEffect(() => {
     if (address && isValidAddress) {
@@ -183,11 +147,46 @@ const Main = () => {
     if (address && isValidAddress) {
       axios
         .get(
-          `https://api.etherscan.io/api?module=account&action=txlist&address=${address.toLowerCase()}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${REACT_APP_ETHERSCAN_KEY}`
+          `https://tally-extension-proxy.herokuapp.com/etherscan?module=account&action=txlist&address=${address.toLowerCase()}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc`
         )
         .then((res) => {
           setRecentTransactions(res.data.result);
-        });
+        })
+        .catch(e => {
+          console.error(e);
+        })
+    }
+  }, [address, isValidAddress]);
+
+  // Get Opensea NFTs
+  useEffect(() => {
+    if (address && isValidAddress) {
+      axios
+        .get(
+          `https://tally-extension-proxy.herokuapp.com/opensea?owner=${address.toLowerCase()}&order_direction=desc&offset=0&limit=50`
+        )
+        .then((res) => {
+          setNfts(res.data.assets)
+        })
+        .catch(e => {
+          console.error(e);
+        })
+    }
+  }, [address, isValidAddress]);
+
+  // Get Balances
+  useEffect(() => {
+    if (address && isValidAddress) {
+      axios
+        .get(
+          `https://tally-extension-proxy.herokuapp.com/bitquery?address=${address.toLowerCase()}`
+        )
+        .then((res) => {
+          setBalanceData(res.data.data);
+        })
+        .catch(e => {
+          console.error(e);
+        })
     }
   }, [address, isValidAddress]);
 
